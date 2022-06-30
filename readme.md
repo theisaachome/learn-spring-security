@@ -156,7 +156,7 @@ public enum AppUserRoles {
 }
 ```
 
-### update User with new Permissions.
+### update User with New Permissions.
 
 ```java
  @Bean
@@ -177,6 +177,83 @@ public enum AppUserRoles {
 
 ```
 
+---
+
 ## ROLES Based Authentication
 
+- Specify the resource for a Specific user roles
 
+- Access only the resource with student roles.
+
+```java
+	.antMatchers("/api/**/").hasRole(AppUserRoles.STUDENT.name())
+```
+
+```java
+@Bean
+SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http.authorizeRequests()
+    		.antMatchers("/","index","/css/*","/js/*").permitAll()
+    		.antMatchers("/api/**/").hasRole(AppUserRoles.STUDENT.name())
+            .anyRequest()
+            .authenticated()
+            .and()
+            .httpBasic();
+    return http.build();
+  }
+```
+
+---
+
+## Permission Based on Authentication
+
+Add one more roles
+
+```java
+ADMINTRAINEE(
+			Sets.newHashSet(
+			AppUserPermission.COURSE_READ,
+			AppUserPermission.STUDENT_READ));
+```
+
+Add User with new roles
+
+```java
+var tomUser = User.builder()
+    	.username("tom")
+    	.password(passwordEncoder.encode("password"))
+    	.roles(AppUserRoles.ADMINTRAINEE.name())
+    	.build();
+```
+
+Add resources
+
+```java
+@RestController
+@RequestMapping("management/api/v1/students")
+public class StudentManagmentController {}
+```
+
+---
+
+## Disabling CSRF
+
+```
+		http
+		.csrf().disable()
+		.authorizeRequests()
+		.antMatchers("/", "index", "/css/*", "/js/*").permitAll()
+		.antMatchers("/api/**/").hasRole(AppUserRoles.STUDENT.name())
+		.anyRequest()
+		.authenticated()
+		.and()
+		.httpBasic();
+
+		return http.build();
+```
+
+## hasAuthority()
+
+```java
+
+```
