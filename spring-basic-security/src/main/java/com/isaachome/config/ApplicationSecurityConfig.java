@@ -2,6 +2,7 @@ package com.isaachome.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.User;
@@ -29,6 +30,12 @@ public class ApplicationSecurityConfig {
 		.authorizeRequests()
 		.antMatchers("/", "index", "/css/*", "/js/*").permitAll()
 		.antMatchers("/api/**/").hasRole(AppUserRoles.STUDENT.name())
+		.antMatchers(HttpMethod.GET,"/management/api/**").hasAuthority(AppUserPermission.COURSE_READ.name())
+		.antMatchers(HttpMethod.POST,"/management/api/**").hasAuthority(AppUserPermission.COURSE_READ.name())
+		.antMatchers(HttpMethod.DELETE,"/management/api/**").hasAuthority(AppUserPermission.COURSE_READ.name())
+		.antMatchers(HttpMethod.GET,"/management/api/**").hasAnyRole(
+				AppUserRoles.ADMIN.name(),
+				AppUserRoles.ADMINTRAINEE.name())
 		.anyRequest()
 		.authenticated()
 		.and()

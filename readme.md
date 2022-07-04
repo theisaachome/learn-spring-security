@@ -252,8 +252,39 @@ public class StudentManagmentController {}
 		return http.build();
 ```
 
+---
+
 ## hasAuthority()
 
+update securityFilterChain method with antMatchers()
+
 ```java
+@Bean
+	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+		http
+		.csrf().disable()
+		.authorizeRequests()
+		.antMatchers("/", "index", "/css/*", "/js/*").permitAll()
+		.antMatchers("/api/**/").hasRole(AppUserRoles.STUDENT.name())
+		.antMatchers(HttpMethod.GET,"/management/api/**").hasAuthority(AppUserPermission.COURSE_READ.name())
+		.antMatchers(HttpMethod.POST,"/management/api/**").hasAuthority(AppUserPermission.COURSE_READ.name())
+		.antMatchers(HttpMethod.DELETE,"/management/api/**").hasAuthority(AppUserPermission.COURSE_READ.name())
+		.antMatchers(HttpMethod.GET,"/management/api/**").hasAnyRole(
+				AppUserRoles.ADMIN.name(),
+				AppUserRoles.ADMINTRAINEE.name())
+		.anyRequest()
+		.authenticated()
+		.and()
+		.httpBasic();
+		return http.build();
+	}
+```
+
+---
+
+## Adding Authorities to Users
+
+```
 
 ```
