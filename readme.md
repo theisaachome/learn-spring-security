@@ -285,6 +285,127 @@ update securityFilterChain method with antMatchers()
 
 ## Adding Authorities to Users
 
+Update AppUserRoles file with following code snippet.
+
+```java
+public Set<SimpleGrantedAuthority> getGrantedAuthorities(){
+		var permissions= getPermissions().stream()
+		.map((permission)-> new SimpleGrantedAuthority(permission.getPermission()))
+		.collect(Collectors.toSet());
+		permissions.add(new SimpleGrantedAuthority("ROLE_" + this.name()));
+
+		return permissions;
+	}
 ```
 
+---
+
+## antMatchers Order Does Matter
+
+```java
+
+	@Bean
+	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+		http
+		.csrf().disable()
+		.authorizeRequests()
+		.antMatchers("/", "index", "/css/*", "/js/*").permitAll()
+		.antMatchers("/api/**/").hasRole(AppUserRoles.STUDENT.name())
+		.antMatchers(HttpMethod.GET,"/management/api/**").hasAuthority(AppUserPermission.COURSE_READ.getPermission())
+		.antMatchers(HttpMethod.POST,"/management/api/**").hasAuthority(AppUserPermission.COURSE_READ.getPermission())
+		.antMatchers(HttpMethod.DELETE,"/management/api/**").hasAuthority(AppUserPermission.COURSE_READ.getPermission())
+		.antMatchers(HttpMethod.GET,"/management/api/**").hasAnyRole(
+				AppUserRoles.ADMIN.name(),
+				AppUserRoles.ADMINTRAINEE.name())
+		.anyRequest()
+		.authenticated()
+		.and()
+		.httpBasic();
+
+		return http.build();
+	}
+
 ```
+
+---
+
+## preAuthorize()
+
+`hasRole("ROLE_")`  
+`hasAnyRole("ROLE_")`  
+`hasAuthority("permission")`  
+`hasAnyAuthority("permission")`
+
+Update at resources or Controller class
+
+```java
+
+@RestController
+@RequestMapping("management/api/v1/students")
+public class StudentManagmentController {
+
+	private static final List<Student> STUDENTS = Arrays.asList(new Student(1, "James Bond"),
+			new Student(2, "Maria Jones"), new Student(3, "Anna Smith"));
+
+	@GetMapping
+	@PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_ADMINTRAINEE')")
+	public List<Student> getAllStudents() {
+		System.out.println("getAllStudents()");
+		return STUDENTS;
+	}
+
+	@PostMapping
+	@PreAuthorize("hasAuthority('student:write')")
+	public void registerNewStudent(@RequestBody Student student) {
+		System.out.println("registerNewStudent()");
+		System.out.println(student);
+	}
+	@DeleteMapping(path="{studentId}")
+	@PreAuthorize("hasAuthority('student:write')")
+	public void deleteStudent(@PathVariable("studentId") Integer studentId) {
+		System.out.println("deleteStudent()");
+		System.out.println(studentId);
+	}
+
+	@PutMapping(path="{studentId}")
+	@PreAuthorize("hasAuthority('student:write')")
+	public void updateStudent(@PathVariable("studentId") Integer studentId,@RequestBody Student student) {
+		System.out.println("updateStudent()");
+		System.out.println(String.format("%s %s", studentId,student));
+	}
+}
+```
+
+Update at Security Config class
+
+```java
+
+@Configuration
+@EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
+public class ApplicationSecurityConfig {}
+```
+
+Remove all antMatcher from securityFilterChain method.
+
+```java
+@Bean
+	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+		http
+		.csrf().disable()
+		.authorizeRequests()
+		.antMatchers("/", "index", "/css/*", "/js/*").permitAll()
+		.anyRequest()
+		.authenticated()
+		.and()
+		.httpBasic();
+
+		return http.build();
+	}
+```
+
+---
+
+## UNDERSTANDING CSRF

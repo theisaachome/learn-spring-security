@@ -3,6 +3,7 @@ package com.isaachome.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.User;
@@ -14,6 +15,7 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class ApplicationSecurityConfig {
 
 	private final PasswordEncoder passwordEncoder;
@@ -29,13 +31,13 @@ public class ApplicationSecurityConfig {
 		.csrf().disable()
 		.authorizeRequests()
 		.antMatchers("/", "index", "/css/*", "/js/*").permitAll()
-		.antMatchers("/api/**/").hasRole(AppUserRoles.STUDENT.name())
-		.antMatchers(HttpMethod.GET,"/management/api/**").hasAuthority(AppUserPermission.COURSE_READ.name())
-		.antMatchers(HttpMethod.POST,"/management/api/**").hasAuthority(AppUserPermission.COURSE_READ.name())
-		.antMatchers(HttpMethod.DELETE,"/management/api/**").hasAuthority(AppUserPermission.COURSE_READ.name())
-		.antMatchers(HttpMethod.GET,"/management/api/**").hasAnyRole(
-				AppUserRoles.ADMIN.name(),
-				AppUserRoles.ADMINTRAINEE.name())
+//		.antMatchers("/api/**/").hasRole(AppUserRoles.STUDENT.name())
+//		.antMatchers(HttpMethod.GET,"/management/api/**").hasAuthority(AppUserPermission.COURSE_READ.getPermission())
+//		.antMatchers(HttpMethod.POST,"/management/api/**").hasAuthority(AppUserPermission.COURSE_READ.getPermission())
+//		.antMatchers(HttpMethod.DELETE,"/management/api/**").hasAuthority(AppUserPermission.COURSE_READ.getPermission())
+//		.antMatchers(HttpMethod.GET,"/management/api/**").hasAnyRole(
+//				AppUserRoles.ADMIN.name(),
+//				AppUserRoles.ADMINTRAINEE.name())
 		.anyRequest()
 		.authenticated()
 		.and()
@@ -46,13 +48,20 @@ public class ApplicationSecurityConfig {
 
 	@Bean
 	UserDetailsService userDetailsService() {
-		UserDetails studentUser = User.builder().username("annasmith").password(passwordEncoder.encode("password"))
-				.roles(AppUserRoles.STUDENT.name())// ROLE_STUDENT spring security will generate.
+		UserDetails studentUser = User.builder()
+				.username("annasmith")
+				.password(passwordEncoder.encode("password"))
+//				.roles(AppUserRoles.STUDENT.name())// ROLE_STUDENT spring security will generate.
+				.authorities(AppUserRoles.STUDENT.getGrantedAuthorities())
 				.build();
 		var adminUser = User.builder().username("linda").password(passwordEncoder.encode("password"))
-				.roles(AppUserRoles.ADMIN.name()).build();
+//				.roles(AppUserRoles.ADMIN.name())
+				.authorities(AppUserRoles.ADMIN.getGrantedAuthorities())
+				.build();
 		var tomUser = User.builder().username("tom").password(passwordEncoder.encode("password"))
-				.roles(AppUserRoles.ADMINTRAINEE.name()).build();
+//				.roles(AppUserRoles.ADMINTRAINEE.name())
+				.authorities(AppUserRoles.ADMINTRAINEE.getGrantedAuthorities())
+				.build();
 		return new InMemoryUserDetailsManager(studentUser, adminUser, tomUser);
 	}
 }
