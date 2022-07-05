@@ -408,4 +408,16 @@ Remove all antMatcher from securityFilterChain method.
 
 ---
 
-## UNDERSTANDING CSRF
+## Form Based Authentication
+
+- Username and password
+- Standard in most websites
+- Forms (Full Control)
+- Can logout
+- HTTPS Recommended
+
+## Enabling Form Based Authentication
+
+```
+
+```
