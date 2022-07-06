@@ -1,5 +1,11 @@
 # Learn spring security.
 
+## Talbe of Content
+
+- [Basic Authentication](#basic-authentication-setup)
+- [Form Based Authentication](#form-based-authentication)
+- [Database Authentication](#database-authentication)
+
 ## Basic Authentication Setup
 
 Write a basic authentication configuration file.
@@ -418,6 +424,156 @@ Remove all antMatcher from securityFilterChain method.
 
 ## Enabling Form Based Authentication
 
-```
+```java
+@Bean
+	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+		http
+		.csrf().disable()
+		.authorizeRequests()
+		.antMatchers("/", "index", "/css/*", "/js/*").permitAll()
+		.antMatchers("/api/**").hasRole(AppUserRoles.STUDENT.name())
+		.anyRequest()
+		.authenticated()
+		.and()
+		.formLogin()
+		.loginPage("/login").permitAll();
+
+		return http.build();
+	}
 
 ```
+
+## Setup Controller for Template View
+
+```java
+@Controller
+@RequestMapping("/")
+public class TemplateController {
+
+	@GetMapping("login")
+	public String getLoginView() {
+		return "login";
+	}
+
+	@GetMapping("courses")
+	public String getCourses() {
+		return "courses";
+	}
+}
+
+```
+
+## REDIRECT AFTER SUCCESS LOGIN
+
+```java
+@Bean
+	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+		http
+		.csrf().disable()
+		.authorizeRequests()
+		.antMatchers("/", "index", "/css/*", "/js/*").permitAll()
+		.antMatchers("/api/**").hasRole(AppUserRoles.STUDENT.name())
+		.anyRequest()
+		.authenticated()
+		.and()
+		.formLogin()
+		.loginPage("/login").permitAll()
+		// Setup default URL after login
+		.defaultSuccessUrl("/courses",true);
+
+		return http.build();
+	}
+
+```
+
+---
+
+## Remember Me
+
+```java
+	@Bean
+	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+		http
+		.csrf().disable()
+		.authorizeRequests()
+		.antMatchers("/", "index", "/css/*", "/js/*").permitAll()
+		.antMatchers("/api/**").hasRole(AppUserRoles.STUDENT.name())
+		.anyRequest()
+		.authenticated()
+		.and()
+		.formLogin()
+		.loginPage("/login").permitAll()
+		.defaultSuccessUrl("/courses",true)
+		.and()
+		// remever me checkbox
+		.rememberMe(); // default to 2 weeks
+
+		return http.build();
+	}
+```
+
+## REMEMBER ME COOKIE AND EXTRA OPTIONS
+
+```java
+http
+		.csrf().disable()
+		.authorizeRequests()
+		.antMatchers("/", "index", "/css/*", "/js/*").permitAll()
+		.antMatchers("/api/**").hasRole(AppUserRoles.STUDENT.name())
+		.anyRequest()
+		.authenticated()
+		.and()
+		.formLogin()
+		.loginPage("/login").permitAll()
+		.defaultSuccessUrl("/courses",true)
+		.and()
+		.rememberMe()
+		.tokenValiditySeconds((int)TimeUnit.DAYS.toSeconds(21))
+		.key("verysomethingsecured");
+
+		return http.build();
+```
+
+---
+
+## LOGOUT
+
+```java
+@Bean
+	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+		http
+		.csrf().disable()
+		.authorizeRequests()
+		.antMatchers("/", "index", "/css/*", "/js/*").permitAll()
+		.antMatchers("/api/**").hasRole(AppUserRoles.STUDENT.name())
+		.anyRequest()
+		.authenticated()
+		.and()
+		.formLogin()
+		.loginPage("/login").permitAll()
+		.defaultSuccessUrl("/courses",true)
+		.and()
+		.rememberMe()
+		.tokenValiditySeconds((int)TimeUnit.DAYS.toSeconds(21))
+		.key("verysomethingsecured")
+		.and()
+		// logout setup and its logoutSuccessUrl
+		.logout()
+		.logoutUrl("/logout")
+		.clearAuthentication(true)
+		.invalidateHttpSession(true)
+		.deleteCookies("JSESSIONID","remember-me")
+		.logoutSuccessUrl("/login");
+
+		return http.build();
+	}
+
+```
+
+---
+
+## Database Authentication
