@@ -4,16 +4,16 @@ import java.util.concurrent.TimeUnit;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-
-import com.isaachome.auth.ApplicationUserService;
 
 @Configuration
 @EnableWebSecurity
@@ -22,11 +22,8 @@ public class ApplicationSecurityConfig {
 
 	private final PasswordEncoder passwordEncoder;
 
-    private final ApplicationUserService applicationUserService;
-
-	public ApplicationSecurityConfig(PasswordEncoder passwordEncoder,ApplicationUserService applicationUserService) {
+	public ApplicationSecurityConfig(PasswordEncoder passwordEncoder) {
 		this.passwordEncoder = passwordEncoder;
-		this.applicationUserService = applicationUserService;
 	}
 
 	@Bean
@@ -58,16 +55,23 @@ public class ApplicationSecurityConfig {
 		
 		return http.build();
 	}
-	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-		auth.authenticationProvider(daoAuthenticationProvider());
-	}
 
 	@Bean
-	DaoAuthenticationProvider daoAuthenticationProvider() {
-		DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-		provider.setPasswordEncoder(passwordEncoder);
-		provider.setUserDetailsService(applicationUserService);
-		return provider;
+	UserDetailsService userDetailsService() {
+		UserDetails studentUser = User.builder()
+				.username("annasmith")
+				.password(passwordEncoder.encode("password"))
+//				.roles(AppUserRoles.STUDENT.name())// ROLE_STUDENT spring security will generate.
+				.authorities(AppUserRoles.STUDENT.getGrantedAuthorities())
+				.build();
+		var adminUser = User.builder().username("linda").password(passwordEncoder.encode("password"))
+//				.roles(AppUserRoles.ADMIN.name())
+				.authorities(AppUserRoles.ADMIN.getGrantedAuthorities())
+				.build();
+		var tomUser = User.builder().username("tom").password(passwordEncoder.encode("password"))
+//				.roles(AppUserRoles.ADMINTRAINEE.name())
+				.authorities(AppUserRoles.ADMINTRAINEE.getGrantedAuthorities())
+				.build();
+		return new InMemoryUserDetailsManager(studentUser, adminUser, tomUser);
 	}
-
 }
